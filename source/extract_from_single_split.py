@@ -14,15 +14,17 @@ from collections import defaultdict
 import nltk
 from nltk.corpus import stopwords
 import operator
+import sys
+
 random.seed(10)
 
 
 parser = argparse.ArgumentParser()
 
-parser.add_argument("--out_topk", default='../data/results/topk.txt', help="name of output file for topk")
-parser.add_argument("--property", default='occupation', help="name of split to use")
-parser.add_argument("--out_stability", default='../data/results/topk.txt', help="name of output file for stability")
+parser.add_argument("--out_topk", default='../data/results/', help="name of output file for topk")
+parser.add_argument("--property", help="name of split to use")
 parser.add_argument("--freq_thr", default=0.00001, help="frequency threshold")
+parser.add_argument("--min_count", default=200, help="min appearances of a word")
 parser.add_argument("--k", default=1000, help="k of k-NN to use")
 
 
@@ -123,6 +125,7 @@ def similarity(w1, w2, space):
 
 def extract_freqs(filename, vocab):
     # raw counts
+    print('extracting freqs ...')
     count = defaultdict(int)
     with open(filename, 'r') as f:
         for l in f:
@@ -170,25 +173,25 @@ def load_all_embeddings(property, val1, val2):
     return vocab, wv, w2i
 
 
-def cosdist_scores(space1, space2, freq1, freq2):
+def cosdist_scores(space1, space2, freq1, freq2, count1, count2):
     all_scores = []
     print(len(vocab[space1]))
     for i, w in tqdm(enumerate(vocab[space1])):
         #assert (w in freq1)
         #if w not in s_words and w in freq2 and freq1[w] > MIN_FREQ and freq2[w] > MIN_FREQ:
-        if w in freq1 and w in freq2:
+        if w in freq1 and w in freq2 and count1[w] > MIN_COUNT and count2[w] > MIN_COUNT:
             all_scores.append((np.inner(wv[space1][w2i[space1][w], :], wv[space2][w2i[space2][w], :]), w))
 
     all_scores_sorted = sorted(all_scores)
     return all_scores_sorted
 
 
-def NN_scores(space1, sapce2, freq1, freq2):
+def NN_scores(space1, sapce2, freq1, freq2, count1, count2):
     nn_scores = []
     for i, w in tqdm(enumerate(vocab[space1])):
         #assert (w in freq1)
         #if w not in s_words and w in freq2 and freq1[w] > MIN_FREQ and freq2[w] > MIN_FREQ:
-        if w in freq1 and w in freq2:
+        if w in freq1 and w in freq2 and count1[w] > MIN_COUNT and count2[w] > MIN_COUNT:
             neighbors_bef = set(topK(w, space1, args.k))
             neighbors_aft = set(topK(w, sapce2, args.k))
             nn_scores.append((len(neighbors_bef.intersection(neighbors_aft)), w))
@@ -231,66 +234,99 @@ def precision_at_k(cosdist, nn):
 
     print('precision at k for cosdist', all_cosdist)
     print('precision at k for nn', all_nn)
-    return all_nn, all_cosdist
+    return all_cosdist, all_nn
 
 
+def diff_nn(w):
+    nn1 = topK(w, val1+'0', 1000)
+    nn2 = topK(w, val2+'0', 1000)
+    top_diff1 = []
+    top_diff2 = []
+    for w in nn1:
+        if w not in nn2:
+            top_diff1.append(w)
+            if len(top_diff1) == 10:
+                break
+    for w in nn2:
+        if w not in nn1:
+            top_diff2.append(w)
+            if len(top_diff2) == 10:
+                break
+    return top_diff1, top_diff2
 
-def print_topk_to_file(filename, k =10):
+
+def print_to_file(filename, precisions_cosdist, precisions_nn, cosdist, nn, corr_cosdist, corr_nn, k =10):
 
     var_dict = {'cosdist': cosdist, 'nn': nn}
-    with open(filename+args.property, 'w') as f:
-        f.write('\n' + args.property + '\n=*=*=*=*=*=*=\n')
+    with open(filename+property, 'w') as f:
+        f.write('\n' + property + '\n=*=*=*=*=*=*=\n')
         for method in ['cosdist', 'nn']:
-            f.write(method + '\n=========\n')
+            f.write('\n' + method + '\n=========\n')
             for w in var_dict[method][0][:k]:
-                f.write(w[1]+'\n')
+                top_diff1, top_diff2 = diff_nn(w[1])
+                f.write('{}\n{}\n{}\n'.format(w[1], ', '.join(top_diff1), ', '.join(top_diff2)))
+        f.write('\nprecisions_cosdist\n{}\n'.format(precisions_cosdist))
+        f.write('\nprecisions_nn\n{}\n'.format(precisions_nn))
+        f.write('\ncorrelation_cosdist\n{}\n'.format(corr_cosdist))
+        f.write('\ncorrelation_nn\n{}\n'.format(corr_nn))
     return
 
+
+def detect(property):
+
+    # extract frequencies
+    freq_norm_val1, count_vocab_val1, top_freq_val1 = extract_freqs(
+        '../data/embeddings/freqs/{}.{}.lowercase'.format(property, val1), vocab[val1 + '0'])
+    freq_norm_val2, count_vocab_val2, top_freq_val2 = extract_freqs(
+        '../data/embeddings/freqs/{}.{}.lowercase'.format(property, val2), vocab[val2 + '0'])
+
+    # detect words using cosdist
+    print('detecting words using cosdist ...')
+    cosdist = []
+
+    for i in range(2):
+        cosdist.append(
+            cosdist_scores(val1 + '_a' + str(i), val2 + str(i), top_freq_val1, top_freq_val2, count_vocab_val1,
+                           count_vocab_val2))
+    print('done.')
+
+    # detect words using nn
+    print('detecting words using NN ...')
+    nn = []
+
+    for i in range(2):
+        nn.append(NN_scores(val1 + '_a' + str(i), val2 + str(i), top_freq_val1, top_freq_val2, count_vocab_val1,
+                            count_vocab_val2))
+    print('done.')
+
+    # stability experiments
+    corr_cosdist, corr_nn = correlation(cosdist, nn)
+    print(corr_cosdist, corr_nn)
+    precisions_cosdist, precisions_nn = precision_at_k(cosdist, nn)
+
+    print_to_file(args.out_topk, precisions_cosdist, precisions_nn, cosdist, nn, corr_cosdist, corr_nn)
 
 
 if __name__ == '__main__':
 
+    assert(sys.version_info[0] > 2)
     args = parser.parse_args()
+    MIN_COUNT = args.min_count
 
     values = {'occupation': ('performer', 'sports'),
-              'age': ('old', 'young')
+              'birthyear': ('1990_2009', '1950_1969'),
+              'gender': ('male', 'female'),
+              'fame': ('rising', 'superstar'),
+              'hebrew': ('2014', '2018')
               }
-    val1, val2 = values[args.property]
-    vocab, wv, w2i = load_all_embeddings(args.property, val1, val2)
 
-    #s_words = set(stopwords.words('english'))
-    #MIN_FREQ = args.freq_thr
-
-    # extract frequencies
-    freq_norm_val1, count_vocab_val1, top_freq_val1 = extract_freqs('../data/embeddings/freqs/{}.{}.lowercase'.format(args.property, val1), vocab[val1+'0'])
-    freq_norm_val2, count_vocab_val2, top_freq_val2 = extract_freqs('../data/embeddings/freqs/{}.{}.lowercase'.format(args.property, val2), vocab[val2+'0'])
-
-
-    # detect words using cosdist
-    print('detect words using cosdist ...')
-    cosdist = []
-
-    for i in range(2):
-        cosdist.append(cosdist_scores(val1+'_a'+str(i), val2+str(i), top_freq_val1, top_freq_val2))
-    print('done.')
-
-    # detect words using nn
-    print('detect words using NN ...')
-    nn = []
-
-    for i in range(2):
-        nn.append(NN_scores(val1+'_a'+str(i), val2+str(i), top_freq_val1, top_freq_val2))
-    print('done.')
-
-    # stability experiments
-    correlation(cosdist, nn)
-
-    all_nn, all_cosdist = precision_at_k(cosdist, nn)
-
-    print(cosdist)
-    print(nn)
-
-    print(all_cosdist)
-    print(all_nn)
-
-    print_topk_to_file(args.out_topk)
+    if args.property:
+        val1, val2 = values[property]
+        vocab, wv, w2i = load_all_embeddings(property, val1, val2)
+        detect(args.property)
+    else:
+        for property in values:
+            val1, val2 = values[property]
+            vocab, wv, w2i = load_all_embeddings(property, val1, val2)
+            print('detecting', property)
+            detect(property)
