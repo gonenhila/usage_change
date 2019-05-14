@@ -15,6 +15,7 @@ import nltk
 from nltk.corpus import stopwords
 import operator
 import sys
+import pdb
 
 random.seed(10)
 
@@ -24,7 +25,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--out_topk", default='../data/results/', help="name of output file for topk")
 parser.add_argument("--property", help="name of split to use")
 parser.add_argument("--freq_thr", default=0.00001, help="frequency threshold")
-parser.add_argument("--min_count", default=200, help="min appearances of a word")
+parser.add_argument("--min_count", type=int, default=200, help="min appearances of a word")
 parser.add_argument("--k", default=1000, help="k of k-NN to use")
 
 
@@ -179,9 +180,11 @@ def cosdist_scores(space1, space2, freq1, freq2, count1, count2):
     for i, w in tqdm(enumerate(vocab[space1])):
         #assert (w in freq1)
         #if w not in s_words and w in freq2 and freq1[w] > MIN_FREQ and freq2[w] > MIN_FREQ:
-        if w in freq1 and w in freq2 and count1[w] > MIN_COUNT and count2[w] > MIN_COUNT:
+        if w not in s_words and w in freq1 and w in freq2 and count1[w] > MIN_COUNT and count2[w] > MIN_COUNT:
             all_scores.append((np.inner(wv[space1][w2i[space1][w], :], wv[space2][w2i[space2][w], :]), w))
 
+    #pdb.set_trace()
+    print('len of ranking', len(all_scores))
     all_scores_sorted = sorted(all_scores)
     return all_scores_sorted
 
@@ -191,11 +194,13 @@ def NN_scores(space1, sapce2, freq1, freq2, count1, count2):
     for i, w in tqdm(enumerate(vocab[space1])):
         #assert (w in freq1)
         #if w not in s_words and w in freq2 and freq1[w] > MIN_FREQ and freq2[w] > MIN_FREQ:
-        if w in freq1 and w in freq2 and count1[w] > MIN_COUNT and count2[w] > MIN_COUNT:
+        if w not in s_words and w in freq1 and w in freq2 and count1[w] > MIN_COUNT and count2[w] > MIN_COUNT:
             neighbors_bef = set(topK(w, space1, args.k))
             neighbors_aft = set(topK(w, sapce2, args.k))
             nn_scores.append((len(neighbors_bef.intersection(neighbors_aft)), w))
 
+    #pdb.set_trace()
+    print('len of ranking', len(nn_scores))
     nn_scores_sorted = sorted(nn_scores)
     return nn_scores_sorted
 
@@ -255,22 +260,32 @@ def diff_nn(w):
     return top_diff1, top_diff2
 
 
-def print_to_file(filename, precisions_cosdist, precisions_nn, cosdist, nn, corr_cosdist, corr_nn, k =10):
+def print_to_file(filename, precisions_cosdist, precisions_nn, cosdist, nn, corr_cosdist, corr_nn, count_vocab_val1, count_vocab_val2, k =10):
 
     var_dict = {'cosdist': cosdist, 'nn': nn}
-    with open(filename+property, 'w') as f:
+    with open(filename+property+str(args.min_count), 'w') as f:
         f.write('\n' + property + '\n=*=*=*=*=*=*=\n')
+        assert(len(cosdist[0]) == len(nn[0]))
+        f.write('length of vocabularies: {} {}, length of rankings: {}\n'.format(len(vocab[val1+'0']), len(vocab[val1+'1']), len(nn[0])))
         for method in ['cosdist', 'nn']:
-            f.write('\n' + method + '\n=========\n')
+            f.write('\n' + method + ' top10\n=================\n')
             for w in var_dict[method][0][:k]:
-                top_diff1, top_diff2 = diff_nn(w[1])
-                f.write('{}\n{}\n{}\n'.format(w[1], ', '.join(top_diff1), ', '.join(top_diff2)))
+                #top_diff1, top_diff2 = diff_nn(w[1])
+                #f.write('{}\n{}\n{}\n'.format(w[1], ', '.join(top_diff1), ', '.join(top_diff2)))
+                f.write('{}\n'.format(w[1]))
         f.write('\nprecisions_cosdist\n{}\n'.format(precisions_cosdist))
         f.write('\nprecisions_nn\n{}\n'.format(precisions_nn))
         f.write('\ncorrelation_cosdist\n{}\n'.format(corr_cosdist))
         f.write('\ncorrelation_nn\n{}\n'.format(corr_nn))
-    return
 
+        for method in ['cosdist', 'nn']:
+            f.write('\n' + method + ' top 100 explained\n=================\n')
+            for w in var_dict[method][0][:100]:
+                top_diff1, top_diff2 = diff_nn(w[1])
+                f.write('\n{}\ncount in corpus1: {}, count in corpus2: {}, measure: {}\n{}\n{}\n'.format(
+                    w[1], count_vocab_val1[w[1]], count_vocab_val2[w[1]], w[0], ', '.join(top_diff1), ', '.join(top_diff2)))
+
+    return
 
 def detect(property):
 
@@ -279,6 +294,7 @@ def detect(property):
         '../data/embeddings/freqs/{}.{}.lowercase'.format(property, val1), vocab[val1 + '0'])
     freq_norm_val2, count_vocab_val2, top_freq_val2 = extract_freqs(
         '../data/embeddings/freqs/{}.{}.lowercase'.format(property, val2), vocab[val2 + '0'])
+    #pdb.set_trace()
 
     # detect words using cosdist
     print('detecting words using cosdist ...')
@@ -304,7 +320,7 @@ def detect(property):
     print(corr_cosdist, corr_nn)
     precisions_cosdist, precisions_nn = precision_at_k(cosdist, nn)
 
-    print_to_file(args.out_topk, precisions_cosdist, precisions_nn, cosdist, nn, corr_cosdist, corr_nn)
+    print_to_file(args.out_topk, precisions_cosdist, precisions_nn, cosdist, nn, corr_cosdist, corr_nn, count_vocab_val1, count_vocab_val2)
 
 
 if __name__ == '__main__':
@@ -320,7 +336,10 @@ if __name__ == '__main__':
               'hebrew': ('2014', '2018')
               }
 
+    s_words = set(stopwords.words('english'))
+
     if args.property:
+        property = args.property
         val1, val2 = values[property]
         vocab, wv, w2i = load_all_embeddings(property, val1, val2)
         detect(args.property)
