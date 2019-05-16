@@ -271,8 +271,9 @@ def diff_nn(w, count1, count2, MIN_COUNT):
 def print_to_file(filename, precisions_cosdist, precisions_nn, cosdist, nn, corr_cosdist, corr_nn, count_vocab_val1, count_vocab_val2, k =10):
 
     var_dict = {'cosdist': cosdist, 'nn': nn}
-    with open(filename+property+str(args.min_count)+'.txt', 'w') as f:
+    with open(filename+property+str(args.min_count)+'.txt', 'w') as f, open(filename+property+str(args.min_count)+'_latex.txt', 'w') as f_latex:
         f.write('\n' + property + '\n=*=*=*=*=*=*=\n')
+        f_latex.write('\n' + property + '\n=*=*=*=*=*=*=\n')
         assert(len(cosdist[0]) == len(nn[0]))
         f.write('length of vocabularies: {} {}, length of rankings: {}\n'.format(len(vocab[val1+'0']), len(vocab[val1+'1']), len(nn[0])))
         for method in ['cosdist', 'nn']:
@@ -292,6 +293,11 @@ def print_to_file(filename, precisions_cosdist, precisions_nn, cosdist, nn, corr
                 top_diff1, top_diff2 = diff_nn(w[1], count_vocab_val1, count_vocab_val2, MIN_COUNT)
                 f.write('\n{}\ncount in corpus1: {}, count in corpus2: {}, measure: {}\n{}\n{}\n'.format(
                     w[1], count_vocab_val1[w[1]], count_vocab_val2[w[1]], w[0], ', '.join(top_diff1), ', '.join(top_diff2)))
+
+        for w_cosdist, w_nn in zip(cosdist[0][:k], nn[0][:k]):
+            top_diff1, top_diff2 = diff_nn(w_nn[1], count_vocab_val1, count_vocab_val2, MIN_COUNT)
+            f_latex.write('\\multirow{{2}}{{*}} {{{}}} & \\multirow{{2}}{{*}}{{{}}} &  {} \\\\   \
+                & &  {}\\\\ \\hline\n'.format(w_cosdist[1], w_nn[1], ', '.join(top_diff1), ', '.join(top_diff2)))
 
     return
 
