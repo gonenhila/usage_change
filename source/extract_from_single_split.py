@@ -99,7 +99,7 @@ def align(w2i, wv, vocab, space1, space2, aligned):
     wv[aligned] = normalize(wv[aligned])
 
 
-def topK(w, space, k=10):
+def topK(w, space, k=10, count = None, min_freq = 0):
     # extract the word vector for word w
     idx = w2i[space][w]
     vec = wv[space][idx, :]
@@ -110,7 +110,15 @@ def topK(w, space, k=10):
     sort_sim = (sim.argsort())[::-1]
 
     # choose topK
-    best = sort_sim[:(k + 1)]
+    if count:
+        best = []
+        for i in sort_sim:
+            if i != idx and count[vocab[space][i]] > min_freq:
+                best.append(i)
+                if len(best) == k:
+                    break
+    else:
+        best = sort_sim[:(k + 1)]
 
     return [vocab[space][i] for i in best if i != idx]
 
@@ -150,7 +158,7 @@ def extract_freqs(filename, vocab):
     top_freq = defaultdict(int)
     sorted_words = [x[0] for x in sorted(count_vocab.items(), key=operator.itemgetter(1))]
     cutoff = len(sorted_words) / float(20)
-    top_freq_words = sorted_words[int(4 * cutoff):]  # -int(cutoff)]
+    top_freq_words = sorted_words[int(4 * cutoff):-200]  # -int(cutoff)]
     for w in top_freq_words:
         top_freq[w] = count[w]
 
@@ -195,8 +203,8 @@ def NN_scores(space1, sapce2, freq1, freq2, count1, count2):
         #assert (w in freq1)
         #if w not in s_words and w in freq2 and freq1[w] > MIN_FREQ and freq2[w] > MIN_FREQ:
         if w not in s_words and w in freq1 and w in freq2 and count1[w] > MIN_COUNT and count2[w] > MIN_COUNT:
-            neighbors_bef = set(topK(w, space1, args.k))
-            neighbors_aft = set(topK(w, sapce2, args.k))
+            neighbors_bef = set(topK(w, space1, args.k, count1, 100))
+            neighbors_aft = set(topK(w, sapce2, args.k, count2, 100))
             nn_scores.append((len(neighbors_bef.intersection(neighbors_aft)), w))
 
     #pdb.set_trace()
@@ -242,9 +250,9 @@ def precision_at_k(cosdist, nn):
     return all_cosdist, all_nn
 
 
-def diff_nn(w):
-    nn1 = topK(w, val1+'0', 1000)
-    nn2 = topK(w, val2+'0', 1000)
+def diff_nn(w, count1, count2, MIN_COUNT):
+    nn1 = topK(w, val1+'0', 1000, count1, 100)
+    nn2 = topK(w, val2+'0', 1000, count2, 100)
     top_diff1 = []
     top_diff2 = []
     for w in nn1:
@@ -263,7 +271,7 @@ def diff_nn(w):
 def print_to_file(filename, precisions_cosdist, precisions_nn, cosdist, nn, corr_cosdist, corr_nn, count_vocab_val1, count_vocab_val2, k =10):
 
     var_dict = {'cosdist': cosdist, 'nn': nn}
-    with open(filename+property+str(args.min_count), 'w') as f:
+    with open(filename+property+str(args.min_count)+'.txt', 'w') as f:
         f.write('\n' + property + '\n=*=*=*=*=*=*=\n')
         assert(len(cosdist[0]) == len(nn[0]))
         f.write('length of vocabularies: {} {}, length of rankings: {}\n'.format(len(vocab[val1+'0']), len(vocab[val1+'1']), len(nn[0])))
@@ -281,7 +289,7 @@ def print_to_file(filename, precisions_cosdist, precisions_nn, cosdist, nn, corr
         for method in ['cosdist', 'nn']:
             f.write('\n' + method + ' top 100 explained\n=================\n')
             for w in var_dict[method][0][:100]:
-                top_diff1, top_diff2 = diff_nn(w[1])
+                top_diff1, top_diff2 = diff_nn(w[1], count_vocab_val1, count_vocab_val2, MIN_COUNT)
                 f.write('\n{}\ncount in corpus1: {}, count in corpus2: {}, measure: {}\n{}\n{}\n'.format(
                     w[1], count_vocab_val1[w[1]], count_vocab_val2[w[1]], w[0], ', '.join(top_diff1), ', '.join(top_diff2)))
 
