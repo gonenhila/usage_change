@@ -128,23 +128,36 @@ def tsne_plot(property, val1, val2):
       neighbors_a = set(topK(int_word, val1, args.k, count_vocab_val1, 100))
       neighbors_b = set(topK(int_word, val2, args.k, count_vocab_val2, 100))
       total_neighbors = neighbors_a.union(neighbors_b)
+      neighbor2color = {int_word:'green'}
+      for neighbor in total_neighbors:
+        if neighbor in neighbors_a and neighbor in neighbors_b:
+          neighbor2color[neighbor] = 'purple'
+        elif neighbor in neighbors_a:
+          neighbor2color[neighbor] = 'blue'
+        else:
+          neighbor2color[neighbor] = 'red'
       for val in [val1, val2]:
         # construct embedding matrix for neighboring words
-        X, wname = [], []
+        X, wname, colors = [], [], []
+        X.append(wv[val][w2i[val][int_word]])
+        wname.append(int_word)
         for word in sorted(total_neighbors):
           if word in w2i[val]:
             X.append(wv[val][w2i[val][word]])
             wname.append(word)
+            colors.append(neighbor2color[word])
         X = np.array(X, dtype=np.float)
         embeddings = TSNE(n_components=2, verbose=2, perplexity=30, n_iter=500).fit_transform(X)
         xx, yy = embeddings[:, 0], embeddings[:, 1]
         fig = plt.figure()
         ax = plt.subplot(111)
-        ax.scatter(xx, yy)
+        ax.scatter(xx, yy, c=colors)
         plt.title('t-SNE for word %s in space %s'%(int_word, val.split('_')[0]))
         for wi, word in enumerate(wname):
-          if wi%3==0:
-            plt.annotate(word, xy=(xx[wi], yy[wi]), xytext=(xx[wi], yy[wi]), textcoords="data", fontsize=12)
+          if wi == 0:
+            plt.annotate(word, xy=(xx[wi], yy[wi]), xytext=(xx[wi], yy[wi]), textcoords="data", fontsize=20)
+          if wi%4==0:
+            plt.annotate(word, xy=(xx[wi], yy[wi]), xytext=(xx[wi], yy[wi]), textcoords="data", fontsize=10)
         #plt.show()
         fig.savefig(args.out_dir+"/%s_%s_%s_sp%s_w%s.pdf"%(property, val1.split('_')[0], val2, val.split('_')[0], int_word), bbox_inches='tight')
     else:
