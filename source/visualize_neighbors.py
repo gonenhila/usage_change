@@ -8,6 +8,8 @@ from numpy import linalg as LA
 import scipy
 from collections import defaultdict
 import matplotlib.pyplot as plt
+import random
+random.seed(123)
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--property", default='gender', help="name of split to use")
@@ -125,8 +127,8 @@ def tsne_plot(property, val1, val2):
 
   for int_word in args.words.strip().split(","):
     if int_word in vocab[val1] and int_word in vocab[val2]:
-      neighbors_a = set(topK(int_word, val1, args.k, count_vocab_val1, 100))
-      neighbors_b = set(topK(int_word, val2, args.k, count_vocab_val2, 100))
+      neighbors_a = set(topK(int_word, val1, args.k, None, 100))
+      neighbors_b = set(topK(int_word, val2, args.k, None, 100))
       total_neighbors = neighbors_a.union(neighbors_b)
       neighbor2color = {int_word:'green'}
       for neighbor in total_neighbors:
@@ -156,7 +158,7 @@ def tsne_plot(property, val1, val2):
         for wi, word in enumerate(wname):
           if wi == 0:
             plt.annotate(word, xy=(xx[wi], yy[wi]), xytext=(xx[wi], yy[wi]), textcoords="data", fontsize=20)
-          if wi%4==0:
+          if wi%3==0:
             plt.annotate(word, xy=(xx[wi], yy[wi]), xytext=(xx[wi], yy[wi]), textcoords="data", fontsize=10)
         #plt.show()
         fig.savefig(args.out_dir+"/%s_%s_%s_sp%s_w%s.pdf"%(property, val1.split('_')[0], val2, val.split('_')[0], int_word), bbox_inches='tight')
