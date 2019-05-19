@@ -13,9 +13,9 @@ random.seed(123)
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--property", default='gender', help="name of split to use")
-parser.add_argument("--words", default='stat,pearl', help="interesting words to plot in csv format")
+parser.add_argument("--words", default='pearl', help="interesting words to plot in csv format")
 parser.add_argument("--out_dir", default='../data/plots/', help="directory to save the plots")
-parser.add_argument("--k", default=100, help="k of k-NN to use")
+parser.add_argument("--k", default=50, help="k of k-NN to use")
 
 def extract_freqs(filename, vocab):
   # raw counts
@@ -143,13 +143,14 @@ def tsne_plot(property, val1, val2):
         X, wname, colors = [], [], []
         X.append(wv[val][w2i[val][int_word]])
         wname.append(int_word)
+        colors.append('green')
         for word in sorted(total_neighbors):
           if word in w2i[val]:
             X.append(wv[val][w2i[val][word]])
             wname.append(word)
             colors.append(neighbor2color[word])
         X = np.array(X, dtype=np.float)
-        embeddings = TSNE(n_components=2, verbose=2, perplexity=30, n_iter=500).fit_transform(X)
+        embeddings = TSNE(n_components=2, verbose=2, perplexity=30, n_iter=1000).fit_transform(X)
         xx, yy = embeddings[:, 0], embeddings[:, 1]
         fig = plt.figure()
         ax = plt.subplot(111)
@@ -158,7 +159,7 @@ def tsne_plot(property, val1, val2):
         for wi, word in enumerate(wname):
           if wi == 0:
             plt.annotate(word, xy=(xx[wi], yy[wi]), xytext=(xx[wi], yy[wi]), textcoords="data", fontsize=20)
-          if wi%3==0:
+          if wi%1==0:
             plt.annotate(word, xy=(xx[wi], yy[wi]), xytext=(xx[wi], yy[wi]), textcoords="data", fontsize=10)
         #plt.show()
         fig.savefig(args.out_dir+"/%s_%s_%s_sp%s_w%s.pdf"%(property, val1.split('_')[0], val2, val.split('_')[0], int_word), bbox_inches='tight')
