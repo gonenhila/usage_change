@@ -12,14 +12,31 @@ import random
 random.seed(123)
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--property", default='gender', help="name of split to use")
+parser.add_argument("--embed_a", 
+                    default='usage_change/embeddings/birthyear.1950_1969.lowercase.seed123.mfreq20', 
+                    help="prefix for embedding and vocab file for split a")
+parser.add_argument("--embed_b", 
+                    default='usage_change/embeddings/birthyear.1990_2009.lowercase.seed123.mfreq20', 
+                    help="prefix for embedding and vocab file for split b")
+parser.add_argument("--data_a", 
+                    default='usage_change/tokdata/birthyear.1950_1969.lowercase', 
+                    help="name of tokenized data file for split a")
+parser.add_argument("--data_b", 
+                    default='usage_change/tokdata/birthyear.1990_2009.lowercase', 
+                    help="name of tokenized data file for split b")
+parser.add_argument("--name_split_a", 
+                    default='old', 
+                    help="short name for split a")
+parser.add_argument("--name_split_b", 
+                    default='young', 
+                    help="short name for split b")
 parser.add_argument("--words", default='pearl', help="interesting words to plot in csv format")
-parser.add_argument("--out_dir", default='../data/plots/', help="directory to save the plots")
-parser.add_argument("--k", default=50, help="k of k-NN to use")
+parser.add_argument("--out_dir", default='/tmp/plot_', help="prefix for directory to save the plots")
+parser.add_argument("--k", type=int, default=50, help="k of k-NN to use")
 
 def extract_freqs(filename, vocab):
   # raw counts
-  print('extracting freqs ...')
+  print('extracting freqs %s'%filename)
   count = defaultdict(int)
   with open(filename, 'r') as f:
      for l in f:
@@ -48,7 +65,7 @@ def normalize(wv):
   return wv
 
 def load_embeddings_from_np(filename):
-  print('loading...')
+  print('loading %s'%filename)
   with open(filename + '.vocab', 'r') as f_embed:
     vocab = [line.strip() for line in f_embed]
   w2i = {w: i for i, w in enumerate(vocab)}
@@ -61,7 +78,7 @@ def load_and_normalize(idi, filename, vocab, wv, w2i, hamilton=False):
   vocab[idi] = cur_vocab
   wv[idi] = cur_wv
   w2i[idi] = cur_w2i
-  print('loaded and normalized %s embeddings'%idi)
+  print('loaded and normalized %s embeddings'%filename)
 
 def topK(w, space, k=10, count = None, min_freq = 0):
   # extract the word vector for word w
@@ -109,21 +126,21 @@ def align(w2i, wv, vocab, space1, space2, aligned):
   create_aligned(w2i, wv, vocab, Q_bef, space1, aligned)
   wv[aligned] = normalize(wv[aligned])
 
-def load_all_embeddings(property, val1, val2):
+def load_all_embeddings(args):
   vocab = {}
   wv = {}
   w2i = {}
-  load_and_normalize(val1, '../data/embeddings/{}.{}.lowercase.seed123.mfreq20'.format(property, val1), vocab, wv, w2i)
-  load_and_normalize(val2, '../data/embeddings/{}.{}.lowercase.seed123.mfreq20'.format(property, val2), vocab, wv, w2i)
+  load_and_normalize(val1, args.embed_a, vocab, wv, w2i)
+  load_and_normalize(val2, args.embed_b, vocab, wv, w2i)
   align(w2i, wv, vocab, val1, val2, val1+'_a')
   return vocab, wv, w2i
 
 def tsne_plot(property, val1, val2):
   # extract frequencies
   freq_norm_val1, count_vocab_val1 = extract_freqs(
-      '../data/embeddings/freqs/{}.{}.lowercase'.format(property, val1.split('_')[0]), vocab[val1])
+      args.data_a, vocab[val1])
   freq_norm_val2, count_vocab_val2 = extract_freqs(
-      '../data/embeddings/freqs/{}.{}.lowercase'.format(property, val2), vocab[val2])
+      args.data_b, vocab[val2])
 
   for int_word in args.words.strip().split(","):
     if int_word in vocab[val1] and int_word in vocab[val2]:
@@ -155,38 +172,22 @@ def tsne_plot(property, val1, val2):
         fig = plt.figure()
         ax = plt.subplot(111)
         ax.scatter(xx, yy, c=colors)
-        plt.title('t-SNE for word %s in space %s'%(int_word, val.split('_')[0]))
+        plt.title('t-SNE for word %s in space %s'%(int_word, val))
         for wi, word in enumerate(wname):
           if wi == 0:
             plt.annotate(word, xy=(xx[wi], yy[wi]), xytext=(xx[wi], yy[wi]), textcoords="data", fontsize=20)
           if wi%1==0:
             plt.annotate(word, xy=(xx[wi], yy[wi]), xytext=(xx[wi], yy[wi]), textcoords="data", fontsize=10)
         #plt.show()
-        fig.savefig(args.out_dir+"/%s_%s_%s_sp%s_w%s.pdf"%(property, val1.split('_')[0], val2, val.split('_')[0], int_word), bbox_inches='tight')
+        fig.savefig(args.out_dir+"sp%s_w%s.pdf"%(val, int_word), bbox_inches='tight')
     else:
       print('skipping word %s'%int_word)
 
 if __name__ == '__main__':
   args = parser.parse_args()
-  values = {  'occupation': ('performer', 'sports'),
-              'birthyear': ('1990_2009', '1950_1969'),
-              'gender': ('male', 'female'),
-              'fame': ('rising', 'superstar'),
-              'hebrew': ('2014', '2018'),
-              'french': ('2014', '2018'),
-              'yang': ('weekday', 'weekend')
-           }
-  property = args.property
-  if property == 'occupation2':
-    property = 'occupation'
-    val1, val2 = 'creator', 'sports'
-  elif property == 'occupation3':
-    property = 'occupation'
-    val1, val2 = 'creator', 'performer'
-  else:
-    val1, val2 = values[property]
-  vocab, wv, w2i = load_all_embeddings(property, val1, val2)
-  tsne_plot(property, val1+"_a", val2)
+  val1, val2 = args.name_split_a, args.name_split_b
+  vocab, wv, w2i = load_all_embeddings(args)
+  tsne_plot(args, val1+"_a", val2)
 
 
 

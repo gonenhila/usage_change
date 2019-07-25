@@ -178,7 +178,8 @@ def cosdist_scores(space1, space2, freq1, freq2):
         assert (w in freq1)
         if w not in s_words and w in freq2 and freq1[w] > MIN_FREQ and freq2[w] > MIN_FREQ:
             all_scores.append((np.inner(wv[space1][w2i[space1][w], :], wv[space2][w2i[space2][w], :]), w))
-
+        if i>150:
+            break
     all_scores_sorted = sorted(all_scores)
     return all_scores_sorted
 
@@ -191,7 +192,8 @@ def NN_scores(space1, sapce2, freq1, freq2):
             neighbors_bef = set(topK(w, space1, args.k))
             neighbors_aft = set(topK(w, sapce2, args.k))
             nn_scores.append((len(neighbors_bef.intersection(neighbors_aft)), w))
-
+        if i>150:
+            break
     nn_scores_sorted = sorted(nn_scores)
     return nn_scores_sorted
 

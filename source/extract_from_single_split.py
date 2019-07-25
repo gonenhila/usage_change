@@ -22,11 +22,31 @@ random.seed(10)
 
 parser = argparse.ArgumentParser()
 
-parser.add_argument("--out_topk", default='../data/results/', help="name of output file for topk")
-parser.add_argument("--property", help="name of split to use")
-parser.add_argument("--freq_thr", default=0.00001, help="frequency threshold")
+parser.add_argument("--embed_a", 
+                    default='usage_change/embeddings/birthyear.1950_1969.lowercase.seed123.mfreq20', 
+                    help="prefix for embedding and vocab file for split a")
+parser.add_argument("--embed_b", 
+                    default='usage_change/embeddings/birthyear.1990_2009.lowercase.seed123.mfreq20', 
+                    help="prefix for embedding and vocab file for split b")
+parser.add_argument("--data_a", 
+                    default='usage_change/tokdata/birthyear.1950_1969.lowercase', 
+                    help="name of tokenized data file for split a")
+parser.add_argument("--data_b", 
+                    default='usage_change/tokdata/birthyear.1990_2009.lowercase', 
+                    help="name of tokenized data file for split b")
+parser.add_argument("--name_split_a", 
+                    default='old', 
+                    help="short name for split a")
+parser.add_argument("--name_split_b", 
+                    default='young', 
+                    help="short name for split b")
+parser.add_argument("--out_topk", 
+                    default='/tmp/result', 
+                    help="prefix for the output files for topk and latex table")
+#parser.add_argument("--property", help="name of split to use")
+parser.add_argument("--freq_thr", type=float, default=0.00001, help="frequency threshold")
 parser.add_argument("--min_count", type=int, default=200, help="min appearances of a word")
-parser.add_argument("--k", default=1000, help="k of k-NN to use")
+parser.add_argument("--k", type=int, default=1000, help="k of k-NN to use")
 
 
 def load_embeddings_hamilton(filename):
@@ -42,7 +62,7 @@ def load_embeddings_hamilton(filename):
 
 
 def load_embeddings_from_np(filename):
-    print('loading ...')
+    print('loading %s'%filename)
     #with codecs.open(filename + '.vocab', 'r', 'utf-8') as f_embed:
     with open(filename + '.vocab', 'r') as f_embed:
         vocab = [line.strip() for line in f_embed]
@@ -134,7 +154,7 @@ def similarity(w1, w2, space):
 
 def extract_freqs(filename, vocab):
     # raw counts
-    print('extracting freqs ...')
+    print('extracting freqs %s'%filename)
     count = defaultdict(int)
     with open(filename, 'r') as f:
         for l in f:
@@ -166,16 +186,16 @@ def extract_freqs(filename, vocab):
     return freq_norm, count_vocab, top_freq
 
 
-def load_all_embeddings(property, val1, val2):
+def load_all_embeddings(args):
 
     vocab = {}
     wv = {}
     w2i = {}
 
-    load_and_normalize(val1+'0', '../data/embeddings/{}.{}.lowercase.seed123.mfreq20'.format(property, val1), vocab, wv, w2i)
-    load_and_normalize(val2+'0', '../data/embeddings/{}.{}.lowercase.seed123.mfreq20'.format(property, val2), vocab, wv, w2i)
-    load_and_normalize(val1+'1', '../data/embeddings/{}.{}.lowercase.seed456.mfreq20'.format(property, val1), vocab, wv, w2i)
-    load_and_normalize(val2+'1', '../data/embeddings/{}.{}.lowercase.seed456.mfreq20'.format(property, val2), vocab, wv, w2i)
+    load_and_normalize(val1+'0', args.embed_a, vocab, wv, w2i)
+    load_and_normalize(val2+'0', args.embed_b, vocab, wv, w2i)
+    load_and_normalize(val1+'1', args.embed_a.replace('seed123', 'seed456'), vocab, wv, w2i)
+    load_and_normalize(val2+'1', args.embed_b.replace('seed123', 'seed456'), vocab, wv, w2i)
     align(w2i, wv, vocab, val1+'0', val2+'0', val1+'_a0')
     align(w2i, wv, vocab, val1+'1', val2+'1', val1+'_a1')
 
@@ -185,12 +205,15 @@ def load_all_embeddings(property, val1, val2):
 def cosdist_scores(space1, space2, freq1, freq2, count1, count2):
     all_scores = []
     print(len(vocab[space1]))
-    for i, w in tqdm(enumerate(vocab[space1])):
+    pbar = tqdm(total=len(vocab[space1]))
+    for i, w in enumerate(vocab[space1]):
         #assert (w in freq1)
         #if w not in s_words and w in freq2 and freq1[w] > MIN_FREQ and freq2[w] > MIN_FREQ:
         if w not in s_words and w in freq1 and w in freq2 and count1[w] > MIN_COUNT and count2[w] > MIN_COUNT:
             all_scores.append((np.inner(wv[space1][w2i[space1][w], :], wv[space2][w2i[space2][w], :]), w))
-
+        if i%10 == 0:
+            pbar.update(10)
+    pbar.close()
     #pdb.set_trace()
     print('len of ranking', len(all_scores))
     all_scores_sorted = sorted(all_scores)
@@ -199,15 +222,18 @@ def cosdist_scores(space1, space2, freq1, freq2, count1, count2):
 
 def NN_scores(space1, sapce2, freq1, freq2, count1, count2):
     nn_scores = []
-    for i, w in tqdm(enumerate(vocab[space1])):
+    pbar = tqdm(total=len(vocab[space1]))
+    for i, w in enumerate(vocab[space1]):
         #assert (w in freq1)
         #if w not in s_words and w in freq2 and freq1[w] > MIN_FREQ and freq2[w] > MIN_FREQ:
         if w not in s_words and w in freq1 and w in freq2 and count1[w] > MIN_COUNT and count2[w] > MIN_COUNT:
             neighbors_bef = set(topK(w, space1, args.k, count1, 100))
             neighbors_aft = set(topK(w, sapce2, args.k, count2, 100))
             nn_scores.append((len(neighbors_bef.intersection(neighbors_aft)), w))
-
-    #pdb.set_trace()
+        if i%10 == 0:
+            pbar.update(10)
+    pbar.close()
+    #pdb.set_trace() 
     print('len of ranking', len(nn_scores))
     nn_scores_sorted = sorted(nn_scores)
     return nn_scores_sorted
@@ -271,9 +297,9 @@ def diff_nn(w, count1, count2, MIN_COUNT):
 def print_to_file(filename, precisions_cosdist, precisions_nn, cosdist, nn, corr_cosdist, corr_nn, count_vocab_val1, count_vocab_val2, k =10):
 
     var_dict = {'cosdist': cosdist, 'nn': nn}
-    with open(filename+property+str(args.min_count)+'.txt', 'w') as f, open(filename+property+str(args.min_count)+'_latex.txt', 'w') as f_latex:
-        f.write('\n' + property + '\n=*=*=*=*=*=*=\n')
-        f_latex.write('\n' + property + '\n=*=*=*=*=*=*=\n')
+    with open(filename+'.txt', 'w') as f, open(filename+'_latex.txt', 'w') as f_latex:
+        #f.write('\n' + property + '\n=*=*=*=*=*=*=\n')
+        #f_latex.write('\n' + property + '\n=*=*=*=*=*=*=\n')
         assert(len(cosdist[0]) == len(nn[0]))
         f.write('length of vocabularies: {} {}, length of rankings: {}\n'.format(len(vocab[val1+'0']), len(vocab[val1+'1']), len(nn[0])))
         for method in ['cosdist', 'nn']:
@@ -301,13 +327,13 @@ def print_to_file(filename, precisions_cosdist, precisions_nn, cosdist, nn, corr
 
     return
 
-def detect(property):
+def detect(args):
 
     # extract frequencies
     freq_norm_val1, count_vocab_val1, top_freq_val1 = extract_freqs(
-        '../data/embeddings/freqs/{}.{}.lowercase'.format(property, val1), vocab[val1 + '0'])
+        args.data_a, vocab[val1 + '0'])
     freq_norm_val2, count_vocab_val2, top_freq_val2 = extract_freqs(
-        '../data/embeddings/freqs/{}.{}.lowercase'.format(property, val2), vocab[val2 + '0'])
+        args.data_b, vocab[val2 + '0'])
     #pdb.set_trace()
 
     # detect words using cosdist
@@ -331,7 +357,7 @@ def detect(property):
 
     # stability experiments
     corr_cosdist, corr_nn = correlation(cosdist, nn)
-    print(corr_cosdist, corr_nn)
+    print('correlation for cosdist {}\ncorrelation for nn {}\n'.format(corr_cosdist, corr_nn))
     precisions_cosdist, precisions_nn = precision_at_k(cosdist, nn)
 
     print_to_file(args.out_topk, precisions_cosdist, precisions_nn, cosdist, nn, corr_cosdist, corr_nn, count_vocab_val1, count_vocab_val2)
@@ -341,25 +367,14 @@ if __name__ == '__main__':
 
     assert(sys.version_info[0] > 2)
     args = parser.parse_args()
+    print(args)
     MIN_COUNT = args.min_count
 
-    values = {'occupation': ('performer', 'sports'),
-              'birthyear': ('1990_2009', '1950_1969'),
-              'gender': ('male', 'female'),
-              'fame': ('rising', 'superstar'),
-              'hebrew': ('2014', '2018')
-              }
-
     s_words = set(stopwords.words('english'))
+    val1, val2 = args.name_split_a, args.name_split_b
+    vocab, wv, w2i = load_all_embeddings(args)
+    detect(args)
 
-    if args.property:
-        property = args.property
-        val1, val2 = values[property]
-        vocab, wv, w2i = load_all_embeddings(property, val1, val2)
-        detect(args.property)
-    else:
-        for property in values:
-            val1, val2 = values[property]
-            vocab, wv, w2i = load_all_embeddings(property, val1, val2)
-            print('detecting', property)
-            detect(property)
+
+
+
