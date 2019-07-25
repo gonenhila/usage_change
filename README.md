@@ -19,13 +19,13 @@ Code used in our EMNLP'19 submission titled 'Simple, Interpretable and Stable Me
 ```
 bash sources/run.sh detect standard young old
 ```
-will save the most changed words, stability scores and so on at `$RES_DIR/detect_young_old_`.
+will save the most changed words, stability scores and so on at `$RES_DIR/detect_young_old_*`.
 Other splits include: `male`, `female`, `performer`, `creator`, `sports`, `weekday`, `weekend`, `hebrew2014`, `hebrew2018`, `french2014` and `french2018`.
 * Visualize the nearest neighbors of given words (`dam`, `assist`) in two subspaces:
 ```
 bash sources/run.sh visualize standard young old dam,assist
 ```
-will save the two plots as pdf at `$RES_DIR/vis_young_old_`.
+will save the two plots as pdf at `$RES_DIR/vis_young_old*`.
 
 #### Using custom subcorpus
 * Ensure you preprocess the subcorpus (e.g., tokenization, handling numbers, removing URLs) and keep each sentence in a single line.
@@ -34,17 +34,17 @@ will save the two plots as pdf at `$RES_DIR/vis_young_old_`.
 ```
 bash sources/run.sh train custom fake_posts fake real_posts real
 ```
-will save the embeddings, vocab files at `$RES_DIR/fake` and `$RES_DIR/real`. Note that `fake` and `real` are shorthand names for the two subcorpus, mainly for easy bookkeeping.
+will save the embeddings, vocab files at `$RES_DIR/fake*` and `$RES_DIR/real*`. Note that `fake` and `real` are shorthand names for the two subcorpus, mainly for easy bookkeeping.
 * Run our detection method on the custom split:
 ```
 bash sources/run.sh detect custom fake_posts real_posts fake real
 ```
-will save the most changed words, stability scores and so on at `$RES_DIR/detect_fake_real_`.
+will save the most changed words, stability scores and so on at `$RES_DIR/detect_fake_real_*`.
 * Visualize the nearest neighbors of given words (`news`, `truth`) in two subspaces:
 ```
 bash sources/run.sh visualize custom fake_posts real_posts fake real news,truth
 ```
-will save the two plots as pdf at `$RES_DIR/vis_fake_real_`.
+will save the two plots as pdf at `$RES_DIR/vis_fake_real_*`.
 
 ### License
 This repository is GPL-licensed.
