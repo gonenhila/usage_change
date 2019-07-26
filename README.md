@@ -31,7 +31,7 @@ bash sources/run.sh detect standard young old
 (format: bash sources/run.sh detect standard <split_a> <split_b>)
 ```
 will save the most changed words, stability scores and so on at `$RES_DIR/detect_young_old_*`.
-Other splits include: `male`, `female`, `performer`, `creator`, `sports`, `weekday`, `weekend`, `hebrew2014`, `hebrew2018`, `french2014` and `french2018`.
+Other splits you can specify include: `male`, `female`, `performer`, `creator`, `sports`, `weekday`, `weekend`, `hebrew2014`, `hebrew2018`, `french2014` and `french2018`.
 * Visualize the nearest neighbors of given words (`dam`, `assist`) in two subspaces:
 ```
 bash sources/run.sh visualize standard young old dam,assist
