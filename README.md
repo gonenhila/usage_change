@@ -35,6 +35,7 @@ Other splits include: `male`, `female`, `performer`, `creator`, `sports`, `weekd
 * Visualize the nearest neighbors of given words (`dam`, `assist`) in two subspaces:
 ```
 bash sources/run.sh visualize standard young old dam,assist
+(format: bash sources/run.sh visualize standard <split_a> <split_b> <words_in_csv>)
 ```
 will save the two plots for each word as pdf at `$RES_DIR/vis_young_old*`.
 
@@ -44,16 +45,19 @@ will save the two plots for each word as pdf at `$RES_DIR/vis_young_old*`.
 * Train word2vec for both the subcorpus (say `fake_posts` and `real_posts`):
 ```
 bash sources/run.sh train custom fake_posts fake real_posts real
+(format: bash sources/run.sh train custom <custom_split_a_txt_file> <custom_split_a_short_name> <custom_split_b_txt_file> <custom_split_b_short_name>)
 ```
-will save the embeddings, vocab files at `$RES_DIR/fake*` and `$RES_DIR/real*`. Note that `fake` and `real` are shorthand names for the two subcorpus, mainly for easy bookkeeping.
+will save the embeddings, vocab files at `$RES_DIR/fake*` and `$RES_DIR/real*`. Note that `fake` and `real` are shorthand names for the two subcorpus, mainly to aid bookkeeping.
 * Run our detection method on the custom split:
 ```
 bash sources/run.sh detect custom fake_posts real_posts fake real
+(format: bash sources/run.sh detect custom <custom_split_a_txt_file> <custom_split_b_txt_file> <custom_split_a_short_name> <custom_split_b_short_name>)
 ```
 will save the most changed words, stability scores and so on at `$RES_DIR/detect_fake_real_*`.
 * Visualize the nearest neighbors of given words (`news`, `truth`) in two subspaces:
 ```
 bash sources/run.sh visualize custom fake_posts real_posts fake real news,truth
+(format: bash sources/run.sh visualize custom <custom_split_a_txt_file> <custom_split_b_txt_file> <custom_split_a_short_name> <custom_split_b_short_name> <words_in_csv>)
 ```
 will save the two plots for each word as pdf at `$RES_DIR/vis_fake_real_*`.
 
