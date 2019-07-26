@@ -2,6 +2,12 @@
 
 Code used in our EMNLP'19 submission titled 'Simple, Interpretable and Stable Method for Detecting Words with Usage Change across Corpora'.
 
+### Intro
+The problem of comparing corpora and searching for words that differ in their usage arises often in computational social science. This is commonly approached by aligning the word embeddings of each corpus, and looking for words whose cosine distance in the aligned space is large. However, these methods often require extensive filtering and are unstable. We propose an alternative approach that does not use vector space alignment, and instead considers the neighbors of each word. The method is simple, interpretable and stable. We demonstrate its effectiveness on 9 different corpus splitting criteria (age, gender and profession of tweet authors, time of tweet) and different languages (English, French and Hebrew).
+
+![Word `dam` in age split](images/gender_male_female_spmale_wclutch.pdf)
+
+
 ### Dependencies
 * nltk
 * numpy
@@ -12,7 +18,7 @@ Code used in our EMNLP'19 submission titled 'Simple, Interpretable and Stable Me
 
 ### Quick Start
 
-#### Using standard subcorpus employed in our paper
+#### Use standard subcorpus employed in our paper
 * Download the data, embeddings, vocab files used in our paper from [Drive](https://drive.google.com/open?id=1ytwtPNZGs7DfoLavsfkw5DaIa-PkhACG). Untar tokdata.tar.gz to tokdata/
 * Open sources/run.sh, set the variables `STD_DIR` to the path of the extracted data and and `RES_DIR` to the path where our method outputs and visualization plots will be stored.
 * Run our detection method on Age split (`young` vs. `old`):
@@ -25,9 +31,9 @@ Other splits include: `male`, `female`, `performer`, `creator`, `sports`, `weekd
 ```
 bash sources/run.sh visualize standard young old dam,assist
 ```
-will save the two plots as pdf at `$RES_DIR/vis_young_old*`.
+will save the two plots for each word as pdf at `$RES_DIR/vis_young_old*`.
 
-#### Using custom subcorpus
+#### Use custom subcorpus
 * Ensure you preprocess the subcorpus (e.g., tokenization, handling numbers, removing URLs) and keep each sentence in a single line.
 * Open sources/run.sh, set the variables `STD_DIR` to the path of the extracted data and and `RES_DIR` to the path where our method outputs and visualization plots will be stored.
 * Train word2vec for both the subcorpus (say `fake_posts` and `real_posts`):
@@ -44,7 +50,7 @@ will save the most changed words, stability scores and so on at `$RES_DIR/detect
 ```
 bash sources/run.sh visualize custom fake_posts real_posts fake real news,truth
 ```
-will save the two plots as pdf at `$RES_DIR/vis_fake_real_*`.
+will save the two plot for each word as pdf at `$RES_DIR/vis_fake_real_*`.
 
 ### License
 This repository is GPL-licensed.
