@@ -54,7 +54,7 @@ will save the most changed words, stability scores and so on at `$RES_DIR/detect
 ```
 bash sources/run.sh visualize custom fake_posts real_posts fake real news,truth
 ```
-will save the two plot for each word as pdf at `$RES_DIR/vis_fake_real_*`.
+will save the two plots for each word as pdf at `$RES_DIR/vis_fake_real_*`.
 
 ### License
 This repository is GPL-licensed.
