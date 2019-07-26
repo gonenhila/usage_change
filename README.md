@@ -27,8 +27,8 @@ t-SNE visualization of top-50 neighbors from each corpus for word `dam`, Age spl
 * Open sources/run.sh, set the variables `STD_DIR` to the path of the extracted data and and `RES_DIR` to the path where our method outputs and visualization plots will be stored.
 * Run our detection method on Age split (`young` vs. `old`):
 ```
-format: bash sources/run.sh detect standard <split_a> <split_b>
 bash sources/run.sh detect standard young old
+(format: bash sources/run.sh detect standard <split_a> <split_b>)
 ```
 will save the most changed words, stability scores and so on at `$RES_DIR/detect_young_old_*`.
 Other splits include: `male`, `female`, `performer`, `creator`, `sports`, `weekday`, `weekend`, `hebrew2014`, `hebrew2018`, `french2014` and `french2018`.
