@@ -5,7 +5,7 @@ Code used in our EMNLP'19 submission titled 'Simple, Interpretable and Stable Me
 ### Intro
 The problem of comparing corpora and searching for words that differ in their usage arises often in computational social science. This is commonly approached by aligning the word embeddings of each corpus, and looking for words whose cosine distance in the aligned space is large. However, these methods often require extensive filtering and are unstable. We propose an alternative approach that does not use vector space alignment, and instead considers the neighbors of each word. The method is simple, interpretable and stable. We demonstrate its effectiveness on 9 different corpus splitting criteria (age, gender and profession of tweet authors, time of tweet) and different languages (English, French and Hebrew).
 
-![Word `dam` in age split](images/gender_male_female_spmale_wclutch.pdf)
+![Word `clutch` in gender split](images/gender.png)
 
 
 ### Dependencies
