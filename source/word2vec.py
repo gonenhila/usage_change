@@ -16,7 +16,9 @@ parser.add_argument("--save",
                     help="prefix for directory to save the .wv.npy, .vocab")
 
 def run_and_save(args, seed):
-  # train word2vec
+  # train word2vec model, save word embeddings (.wv.npy) and vocab file (.vocab)
+
+  # train word2vec model
   print('training %s for seed %d'%(args.data, seed))
   model = gensim.models.Word2Vec(size=300, alpha=0.025, window=4, min_count=20, seed=seed, workers=12, sg=1, hs=0, negative=5, iter=5)
   model.build_vocab(gensim.models.word2vec.LineSentence(args.data))

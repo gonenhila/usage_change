@@ -6,7 +6,7 @@
 STD_DIR=usage_change
 
 # set this variable to the result directory
-RES_DIR=/home/gjawahar/temp/obj
+RES_DIR=/Users/ganeshj/Desktop/github/usage_change/temp
 
 # standard dataset configuration
 declare -A data
@@ -33,12 +33,10 @@ fi
 # visualize neighbors for given words
 if [ $1 == "visualize" ] ; then
   if [ $2 == "custom" ] ; then
-    python visualize_neighbors.py --data_a $3 --data_b $4 --embed_a $RES_DIR/$5.seed123 --embed_b $RES_DIR/$6.seed123 --name_split_a $5 --name_split_b $6 --out_dir $RES_DIR/vis_$5_$6_ --words $7
+    python source/visualize_neighbors.py --data_a $3 --data_b $4 --embed_a $RES_DIR/$5.seed123 --embed_b $RES_DIR/$6.seed123 --name_split_a $5 --name_split_b $6 --out_dir $RES_DIR/vis_$5_$6_ --words $7
   fi
   if [ $2 == "standard" ] ; then
-    python visualize_neighbors.py --data_a $STD_DIR/tokdata/"${data[$3]}" --data_b $STD_DIR/tokdata/"${data[$4]}" --embed_a $STD_DIR/embeddings/"${data[$3]}".seed123.mfreq20 --embed_b $STD_DIR/embeddings/"${data[$4]}".seed123.mfreq20 --name_split_a $3 --name_split_b $4 --out_dir $RES_DIR/vis_$3_$4_ --words $5
+    python source/visualize_neighbors.py --data_a $STD_DIR/tokdata/"${data[$3]}" --data_b $STD_DIR/tokdata/"${data[$4]}" --embed_a $STD_DIR/embeddings/"${data[$3]}".seed123.mfreq20 --embed_b $STD_DIR/embeddings/"${data[$4]}".seed123.mfreq20 --name_split_a $3 --name_split_b $4 --out_dir $RES_DIR/vis_$3_$4_ --words $5
   fi
 fi
-
-
 
