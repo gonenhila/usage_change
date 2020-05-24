@@ -22,7 +22,7 @@ t-SNE visualization of top-50 neighbors from each corpus for word `dam`, Age spl
 ### Quick Start
 
 #### Use standard splits (e.g. age, gender) studied in our paper
-* Download the data, embeddings, vocab files used in our paper from [Drive](https://drive.google.com/open?id=1ytwtPNZGs7DfoLavsfkw5DaIa-PkhACG). Untar tokdata.tar.gz to tokdata/
+* Download the data, embeddings, vocab files used in our paper from [Drive](https://1drv.ms/u/s!AlflMXNPVy-wgYwvnHTl-CfOoQh_qw?e=Q8hptH). Untar tokdata.tar.gz to tokdata/
 * Open sources/run.sh, set the variables `STD_DIR` to the path of the extracted data and and `RES_DIR` to the path where our method outputs and visualization plots will be stored.
 * Run our detection method on Age split (`young` vs. `old`):
 ```
