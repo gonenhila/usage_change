@@ -40,23 +40,23 @@ will save the two plots for each word as pdf at `$RES_DIR/vis_young_old*`.
 
 #### Use custom splits
 * Ensure you preprocess the subcorpus (e.g., tokenization, handling numbers, removing URLs) and keep each sentence in a single line.
-* Open sources/run.sh, set the variables `STD_DIR` to the path of the extracted data and and `RES_DIR` to the path where our method outputs and visualization plots will be stored.
+* Open source/run.sh, set the variables `STD_DIR` to the path of the extracted data and and `RES_DIR` to the path where our method outputs and visualization plots will be stored.
 * Train word2vec for both the subcorpus (say `corp1_posts` and `corp2_posts`):
 ```
-bash sources/run.sh train custom corp1_posts corp1 corp2_posts corp2
-(format: bash sources/run.sh train custom <custom_split_a_txt_file> <custom_split_a_short_name> <custom_split_b_txt_file> <custom_split_b_short_name>)
+bash source/run.sh train custom corp1_posts corp1 corp2_posts corp2
+(format: bash source/run.sh train custom <custom_split_a_txt_file> <custom_split_a_short_name> <custom_split_b_txt_file> <custom_split_b_short_name>)
 ```
 will save the embeddings, vocab files at `$RES_DIR/corp1*` and `$RES_DIR/corp2*`. Note that `corp1` and `corp2` are shorthand names for the two subcorpus, mainly to aid bookkeeping.
 * Run our detection method on the custom split:
 ```
-bash sources/run.sh detect custom corp1_posts corp2_posts corp1 corp2
-(format: bash sources/run.sh detect custom <custom_split_a_txt_file> <custom_split_b_txt_file> <custom_split_a_short_name> <custom_split_b_short_name>)
+bash source/run.sh detect custom corp1_posts corp2_posts corp1 corp2
+(format: bash source/run.sh detect custom <custom_split_a_txt_file> <custom_split_b_txt_file> <custom_split_a_short_name> <custom_split_b_short_name>)
 ```
 will save the most changed words, stability scores and so on at `$RES_DIR/detect_corp1_corp2_*`.
 * Visualize the nearest neighbors of given words (`word_a`, `word_b`) in two subspaces:
 ```
-bash sources/run.sh visualize custom corp1_posts corp2_posts corp1 corp2 word_a,word_b
-(format: bash sources/run.sh visualize custom <custom_split_a_txt_file> <custom_split_b_txt_file> <custom_split_a_short_name> <custom_split_b_short_name> <words_in_csv>)
+bash source/run.sh visualize custom corp1_posts corp2_posts corp1 corp2 word_a,word_b
+(format: bash source/run.sh visualize custom <custom_split_a_txt_file> <custom_split_b_txt_file> <custom_split_a_short_name> <custom_split_b_short_name> <words_in_csv>)
 ```
 will save the two plots for each word as pdf at `$RES_DIR/vis_corp1_corp2_*`.
 
