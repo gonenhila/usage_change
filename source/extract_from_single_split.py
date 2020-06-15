@@ -286,8 +286,8 @@ def diff_nn(w, count1, count2, MIN_COUNT):
     # identify top 10 neighbors that are specific in a space
 
     # identify the neighbors 
-    nn1 = topK(w, val1+'0', 1000, count1, 100)
-    nn2 = topK(w, val2+'0', 1000, count2, 100)
+    nn1 = topK(w, val1+'0', args.k, count1, 100)
+    nn2 = topK(w, val2+'0', args.k, count2, 100)
 
     # identify the top 10 neighbors that specific to a space
     top_diff1 = []
