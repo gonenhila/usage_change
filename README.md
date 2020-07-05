@@ -60,6 +60,21 @@ bash source/run.sh visualize custom corp1_posts corp2_posts corp1 corp2 word_a,w
 ```
 will save the two plots for each word as pdf at `$RES_DIR/vis_corp1_corp2_*`.
 
+### Cite
+If you find this project useful, please cite the paper:
+```
+@inproceedings{gonen-etal-2020-simple,
+    title = "Simple, Interpretable and Stable Method for Detecting Words with Usage Change across Corpora",
+    author = "Gonen, Hila and Jawahar, Ganesh and Seddah, Djam{\'e}  and Goldberg, Yoav",
+    booktitle = "Association for Computational Linguistics",
+    year = "2020",
+    pages = "538--555"
+}
+```
+
+### Contact
+If you have any questions or suggestions, please contact [Hila Gonen](mailto:hilagnn@gmail.com) and [Ganesh Jawahar](mailto:ganeshjwhr@gmail.com).
+
 ### License
 This repository is GPL-licensed.
 
